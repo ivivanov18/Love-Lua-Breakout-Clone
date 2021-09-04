@@ -1,14 +1,19 @@
 push = require 'lib/push'
 local constants = require 'src/constants'
+require 'src/Paddle'
 
 function love.load()
+	print(love.getVersion())
 	love.graphics.setDefaultFilter('nearest', 'nearest')
 	push:setupScreen(constants.VIRTUAL_WIDTH, constants.VIRTUAL_HEIGHT,
 					 constants.WINDOW_WIDTH,constants.WINDOW_HEIGHT, {
 						vsync = true,
-						fullscreen = false,
+						fullscreen = true,
 						resizable = true
-					})
+					}) 
+
+	Paddle:load(210, 213, 30, 10)
+	love.keyboard.keyPressed = {}
 end
 
 function love.keypressed(key)
@@ -32,11 +37,15 @@ function love.resize(w,h)
 end
 
 function love.update(dt)
+	Paddle:update(dt)
+	love.keyboard.keyPressed = {}
 end
 
 
 function love.draw()
 	push:apply('start')
-	love.graphics.printf('Love BREAKOUT', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
+--	love.graphics.printf('Love BREAKOUT', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
+	love.graphics.setBackgroundColor(115/255, 27/255, 135/255, 50/100)
+	Paddle:draw()
 	push:apply('end')
 end
