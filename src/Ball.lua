@@ -12,8 +12,8 @@ function Ball:load(x, y)
 end
 
 function Ball:update(dt)
-	self.x = self.x + self.dx 
-	self.y = self.y + self.dy 
+	self.x = self.x + self.dx * dt
+	self.y = self.y + self.dy * dt
 	if self.y <= 0 then
 		self.y = 0
 		self.dy = -self.dy
@@ -35,4 +35,19 @@ end
 
 function Ball:draw()
 	love.graphics.rectangle('fill', self.x, self.y, self.width, self.height)
+end
+
+-- [[
+-- Function that returns whether ball collides with rectangle like object
+-- who has x, y, width and height 
+-- ]]
+function Ball:collides(rectangle)
+	if self.x > rectangle.x + rectangle.width or rectangle.x > self.x + self.width then
+		return false
+	end
+
+	if self.y > rectangle.y + rectangle.height or rectangle.y > self.y + self.height then
+		return false
+	end
+	return true
 end

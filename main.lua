@@ -56,13 +56,16 @@ function love.update(dt)
 		if love.keyboard.wasPressed('space') then
 			gameState = "play"
 			math.randomseed(os.time())
-			ballVel = math.random(120, 180)
-			Ball.dx = ballVel
-			Ball.dy = - ballVel
+			Ball.dx = math.random(2) == 1 and -100 or 100
+			Ball.dy = math.random(-80,-100)
 		end
 	elseif gameState == "play" then
 		Paddle:update(dt)
 		Ball:update(dt)
+		if Ball:collides(Paddle) then
+			Ball.y = Paddle.y - Ball.height
+			Ball.dy = - Ball.dy
+		end
 	end
 	love.keyboard.keyPressed = {}
 end
