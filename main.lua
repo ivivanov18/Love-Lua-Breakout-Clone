@@ -2,8 +2,38 @@ push = require 'lib/push'
 local constants = require 'src/constants'
 require 'src/Paddle'
 require 'src/Ball'
+require 'src/Brick'
 
-gameState = "serve"
+function draw_bricks()
+	for row, line_of_bricks in ipairs(bricks) do
+		for col, brick in ipairs(line_of_bricks) do
+			brick:draw()
+		end
+	end
+end
+
+function generate_bricks(virtual_width, nb_rows )
+	local new_bricks = {}
+	-- start position to generate
+	current_x = 30
+	current_y = 20
+	width = 30
+	height = 10
+	space = 1
+	current_column = 1
+	for current_row = 1, nb_rows do
+		new_bricks[current_row] = {}
+		while current_x + width + space <= virtual_width - width do
+			new_bricks[current_row][current_column] = Brick:new({ x = current_x, y = current_y, width = width, height = height}) 
+			current_x = current_x + width + space
+			current_column = current_column + 1
+		end
+		current_y = current_y + height + space
+		current_x = 30
+		current_column = 1
+	end
+	return new_bricks
+end
 
 function love.load()
 	-- init graphics
@@ -23,8 +53,16 @@ function love.load()
 
 	-- init player
 	score = 0
-	Paddle:load(210, 213, 30, 10)
+	Paddle:load(210, 213, 40, 10)
 	Ball:load(Paddle.x + Paddle.width / 2 - 8/ 2, Paddle.y - 8)
+	gameState = "serve"
+	bricks1 = {
+		Brick:new({x = 30, y = 20, width = 30, height = 10}),
+		Brick:new({x = 61, y = 20, width = 30, height = 10}),
+		Brick:new({x = 92, y = 20, width = 30, height = 10}),
+	}
+
+	bricks = generate_bricks( constants.VIRTUAL_WIDTH, 5)
 end
 
 function love.keypressed(key)
@@ -66,6 +104,14 @@ function love.update(dt)
 			Ball.y = Paddle.y - Ball.height
 			Ball.dy = - Ball.dy
 		end
+		for row, line_of_bricks in ipairs(bricks) do
+			for col, brick in ipairs(line_of_bricks) do
+				if (Ball:collides(brick)) then
+					brick.isAlive = false
+					-- TODO: add logic to manage ball bouncing when ball gets hit
+				end
+			end
+		end
 	end
 	love.keyboard.keyPressed = {}
 end
@@ -77,6 +123,7 @@ function love.draw()
 	love.graphics.setBackgroundColor(115/255, 27/255, 135/255, 50/100)
 	Paddle:draw()
 	Ball:draw()
+	draw_bricks()
 	displayFPS()
 	push:apply('end')
 end
