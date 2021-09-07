@@ -72,6 +72,10 @@ function love.keypressed(key)
 	if key == 'escape' then
 		love.event.quit()
 	end
+	if key == 'space' and gameState == 'victory' then
+		gameState = 'serve'
+		bricks = generate_bricks( constants.VIRTUAL_WIDTH, 1)
+	end
 
 	love.keyboard.keyPressed[key] = true
 end
@@ -168,6 +172,12 @@ function love.draw()
 	push:apply('start')
 	if (gameState == 'serve') then
 		love.graphics.printf('Alex\'s Breakout', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
+		love.graphics.printf('Press Space to start the game', 0, constants.VIRTUAL_HEIGHT / 2 + 20, constants.VIRTUAL_WIDTH, 'center')
+	end
+	if (gameState == 'victory') then
+		love.graphics.printf('You WIN!!!', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
+		love.graphics.printf('Press Space for new game', 0, constants.VIRTUAL_HEIGHT / 2 + 20, constants.VIRTUAL_WIDTH, 'center')
+		love.graphics.printf('Press Esc to quit', 0, constants.VIRTUAL_HEIGHT / 2 + 40, constants.VIRTUAL_WIDTH, 'center')
 	end
 
 	love.graphics.setBackgroundColor(115/255, 27/255, 135/255, 50/100)
