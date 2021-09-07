@@ -17,6 +17,7 @@ function Ball:update(dt)
 	if self.y <= 0 then
 		self.y = 0
 		self.dy = -self.dy
+		love.audio.play(sounds['wall-hit'])
 	-- the logic where the ball is hitting the below paddle ground is not necessary
 	-- TODO: to be deleted
 	elseif self.y + self.height >= constants.VIRTUAL_HEIGHT then
@@ -27,9 +28,11 @@ function Ball:update(dt)
 	if self.x <= 0 then
 		self.x = 0
 		self.dx = - self.dx
+		love.audio.play(sounds['wall-hit'])
 	elseif self.x + self.width >= constants.VIRTUAL_WIDTH then
 		self.x = constants.VIRTUAL_WIDTH - self.width
 		self.dx = - self.dx
+		love.audio.play(sounds['wall-hit'])
 	end
 end
 

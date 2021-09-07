@@ -56,13 +56,16 @@ function love.load()
 	Paddle:load(210, 213, 40, 10)
 	Ball:load(Paddle.x + Paddle.width / 2 - 8/ 2, Paddle.y - 8)
 	gameState = "serve"
-	bricks1 = {
-		Brick:new({x = 30, y = 20, width = 30, height = 10}),
-		Brick:new({x = 61, y = 20, width = 30, height = 10}),
-		Brick:new({x = 92, y = 20, width = 30, height = 10}),
-	}
+	bricks = generate_bricks( constants.VIRTUAL_WIDTH, 1)
 
-	bricks = generate_bricks( constants.VIRTUAL_WIDTH, 5)
+	-- init sounds
+	sounds = {
+		['wall-hit'] = love.audio.newSource('sounds/wall_hit.wav', 'static'),
+		['paddle-hit'] = love.audio.newSource('sounds/paddle_hit_2.wav', 'static'),
+		['brick-hit'] = love.audio.newSource('sounds/brick_hit.wav', 'static'),
+		['loss'] = love.audio.newSource('sounds/loss_sound.wav', 'static'),
+		['victory'] = love.audio.newSource('sounds/victory.wav', 'static')
+	}
 end
 
 function love.keypressed(key)
@@ -103,14 +106,58 @@ function love.update(dt)
 		if Ball:collides(Paddle) then
 			Ball.y = Paddle.y - Ball.height
 			Ball.dy = - Ball.dy
+			love.audio.play(sounds['paddle-hit'])
 		end
 		for row, line_of_bricks in ipairs(bricks) do
 			for col, brick in ipairs(line_of_bricks) do
-				if (Ball:collides(brick)) then
+				if (brick.isAlive and Ball:collides(brick)) then
 					brick.isAlive = false
-					-- TODO: add logic to manage ball bouncing when ball gets hit
+					love.audio.play(sounds['brick-hit'])
+					-- Check from which side to change rebound velocity accordingly
+					diffBottomBrickTopBall = math.abs(brick.y + brick.height - Ball.y)
+					diffTopBrickBottomBall = math.abs(brick.y - (Ball.y + Ball.height))
+					diffRightBrickLeftBall = math.abs(brick.x + brick.width - Ball.x)
+					diffLeftBrickRightBall = math.abs(brick.x - (Ball.x + Ball.width))
+
+					-- From bottom brick
+					if (Ball.dy < 0
+						and diffBottomBrickTopBall < diffTopBrickBottomBall
+						and diffBottomBrickTopBall < diffLeftBrickRightBall
+						and diffBottomBrickTopBall < diffRightBrickLeftBall
+						) then
+						Ball.dy = math.abs(Ball.dy)
+					end
+					-- From Top brick
+					if (Ball.dy > 0
+						and diffTopBrickBottomBall < diffBottomBrickTopBall
+						and diffTopBrickBottomBall < diffLeftBrickRightBall
+						and diffTopBrickBottomBall < diffRightBrickLeftBall
+						) then
+						Ball.dy = -math.abs(Ball.dy)
+					end
+					-- From left brick
+					if (Ball.dx > 0
+						and diffLeftBrickRightBall < diffTopBrickBottomBall
+						and diffLeftBrickRightBall < diffBottomBrickTopBall
+						and diffLeftBrickRightBall < diffRightBrickLeftBall
+						) then
+						Ball.dx = math.abs(Ball.dx)
+					end
+					-- From right of brick
+					if (Ball.x < 0
+						and diffRightBrickLeftBall < diffLeftBrickRightBall
+						and diffRightBrickLeftBall < diffTopBrickBottomBall
+						and diffRightBrickLeftBall < diffBottomBrickTopBall
+						) then
+						Ball.dx = - math.abs(Ball.dx)
+					end
+
 				end
 			end
+		end
+		if (are_bricks_left(bricks) == false) then
+			gameState = "victory"
+			love.audio.play(sounds['victory'])
 		end
 	end
 	love.keyboard.keyPressed = {}
@@ -119,7 +166,10 @@ end
 
 function love.draw()
 	push:apply('start')
-	love.graphics.printf('Love BREAKOUT', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
+	if (gameState == 'serve') then
+		love.graphics.printf('Alex\'s Breakout', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
+	end
+
 	love.graphics.setBackgroundColor(115/255, 27/255, 135/255, 50/100)
 	Paddle:draw()
 	Ball:draw()
@@ -131,4 +181,15 @@ end
 function displayFPS()
 	love.graphics.setColor(0, 255, 0, 255)
 	love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
+end
+
+function are_bricks_left(bricks)
+	for i, line_of_bricks in ipairs(bricks) do
+		for j, brick in ipairs(line_of_bricks) do
+			if brick.isAlive == true then
+				return true
+			end
+		end
+	end
+	return false
 end
