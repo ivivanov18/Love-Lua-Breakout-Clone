@@ -4,6 +4,8 @@ require 'src/Paddle'
 require 'src/Ball'
 require 'src/Brick'
 
+local lives = 3
+
 function draw_bricks()
 	for row, line_of_bricks in ipairs(bricks) do
 		for col, brick in ipairs(line_of_bricks) do
@@ -46,6 +48,7 @@ function love.load()
 					}) 
 
 	font = love.graphics.newFont('fonts/font.ttf', 20)
+	smallFont = love.graphics.newFont('fonts/font.ttf', 10)
 	love.graphics.setFont(font)
 
 	-- init input
@@ -93,7 +96,7 @@ function love.resize(w,h)
 end
 
 function love.update(dt)
-	if gameState == "serve" then
+	if gameState == "serve" or gameState == "loss" then
 		Paddle:update(dt)
 		Ball.y = Paddle.y - Ball.height
 		Ball.x = Paddle.x + Paddle.width / 2 - Ball.width/2
@@ -107,11 +110,21 @@ function love.update(dt)
 	elseif gameState == "play" then
 		Paddle:update(dt)
 		Ball:update(dt)
+
 		if Ball:collides(Paddle) then
 			Ball.y = Paddle.y - Ball.height
 			Ball.dy = - Ball.dy
 			love.audio.play(sounds['paddle-hit'])
 		end
+
+		if Ball.y > Paddle.y + Paddle.height and lives > 1 then
+			gameState = "serve"
+			lives = lives - 1
+		elseif Ball.y > Paddle.y + Paddle.height and lives == 1 then
+			gameState = "loss"
+			lives = 0
+		end
+
 		for row, line_of_bricks in ipairs(bricks) do
 			for col, brick in ipairs(line_of_bricks) do
 				if (brick.isAlive and Ball:collides(brick)) then
@@ -171,11 +184,19 @@ end
 function love.draw()
 	push:apply('start')
 	if (gameState == 'serve') then
+		love.graphics.setFont(font)
 		love.graphics.printf('Alex\'s Breakout', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
-		love.graphics.printf('Press Space to start the game', 0, constants.VIRTUAL_HEIGHT / 2 + 20, constants.VIRTUAL_WIDTH, 'center')
+		love.graphics.printf('Press Space to continue the game', 0, constants.VIRTUAL_HEIGHT / 2 + 20, constants.VIRTUAL_WIDTH, 'center')
 	end
 	if (gameState == 'victory') then
+		love.graphics.setFont(font)
 		love.graphics.printf('You WIN!!!', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
+		love.graphics.printf('Press Space for new game', 0, constants.VIRTUAL_HEIGHT / 2 + 20, constants.VIRTUAL_WIDTH, 'center')
+		love.graphics.printf('Press Esc to quit', 0, constants.VIRTUAL_HEIGHT / 2 + 40, constants.VIRTUAL_WIDTH, 'center')
+	end
+	if (gameState == 'loss') then
+		love.graphics.setFont(font)
+		love.graphics.printf('You LOOSE!!!', 0, constants.VIRTUAL_HEIGHT / 2 - 6, constants.VIRTUAL_WIDTH, 'center')
 		love.graphics.printf('Press Space for new game', 0, constants.VIRTUAL_HEIGHT / 2 + 20, constants.VIRTUAL_WIDTH, 'center')
 		love.graphics.printf('Press Esc to quit', 0, constants.VIRTUAL_HEIGHT / 2 + 40, constants.VIRTUAL_WIDTH, 'center')
 	end
@@ -184,13 +205,19 @@ function love.draw()
 	Paddle:draw()
 	Ball:draw()
 	draw_bricks()
-	displayFPS()
+	displayLives()
 	push:apply('end')
 end
 
 function displayFPS()
 	love.graphics.setColor(0, 255, 0, 255)
 	love.graphics.print('FPS: ' .. tostring(love.timer.getFPS()), 10, 10)
+end
+
+function displayLives()
+	love.graphics.setColor(0, 255, 0, 255)
+	love.graphics.setFont(smallFont)
+	love.graphics.print('lives : ' .. tostring(lives), 5, 5)
 end
 
 function are_bricks_left(bricks)
